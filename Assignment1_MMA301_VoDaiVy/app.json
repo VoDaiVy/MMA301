@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "demoWeb",
-    "slug": "demoWeb",
+    "name": "Assignemtn1_MMA301_VoDaiVy",
+    "slug": "Assignemtn1_MMA301_VoDaiVy",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,23 +13,19 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.Assignemtn1-MMA301-VoDaiVy"
     },
     "android": {
+      "package": "com.anonymous.assignment1mma301vodaivy",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true,
-      "package": "com.vyvoa1324.demoWeb"
+      "edgeToEdgeEnabled": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "extra": {
-      "eas": {
-        "projectId": "7848703e-a096-48ac-a755-8d370635533a"
-      }
     }
   }
 }
