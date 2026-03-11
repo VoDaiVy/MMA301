@@ -231,7 +231,7 @@ export default function CartScreen({ navigation }) {
         </Pressable>
       </Modal>
 
-      {/* ── Checkout footer ── */}}
+      {/* ── Checkout footer ── */}
       <View style={styles.footer}>
         <View style={styles.footerTotal}>
           <Text style={styles.footerTotalLabel}>Total{shipping === 0 ? ' (Free ship 🎉)' : ` (Ship $${shipping.toFixed(2)})`}</Text>
