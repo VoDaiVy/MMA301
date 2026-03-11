@@ -8,7 +8,7 @@ export default function useCart() {
     throw new Error('useCart must be used within a <CartProvider>');
   }
 
-  const { state, addToCart, removeFromCart, updateQuantity, clearCart } = context;
+  const { state, addToCart, removeFromCart, updateQuantity, clearCart, removeByPrice } = context;
 
   /** Total number of individual units across all cart lines */
   const totalItems = useMemo(
@@ -66,5 +66,6 @@ export default function useCart() {
     removeFromCart,
     updateQuantity,
     clearCart,
+    removeByPrice,
   };
 }

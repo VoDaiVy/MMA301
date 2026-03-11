@@ -18,7 +18,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ProductCard    from '../components/ProductCard';
 import SkeletonLoader from '../components/SkeletonLoader';
 import useCart        from '../hooks/useCart';
-import useGeminiAI    from '../hooks/useGeminiAI';
+import useFavorites   from '../hooks/useFavorites';
+import useGeminiAI, { extractPriceHint } from '../hooks/useGeminiAI';
 import { COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING, RADIUS } from '../constants/theme';
 
 const LIMIT    = 10;
@@ -48,7 +49,8 @@ const CATEGORIES = [
 ];
 
 export default function ProductListScreen({ navigation }) {
-  const { addToCart } = useCart();
+  const { addToCart }                       = useCart();
+  const { isFavorite, toggleFavorite }       = useFavorites();
   const { analyzeRequest, loading: aiLoading } = useGeminiAI();
 
   // ── Data state ──────────────────────────────────────────────────────────────
@@ -60,11 +62,12 @@ export default function ProductListScreen({ navigation }) {
   const [error,       setError      ] = useState(null);
 
   // ── Search state ────────────────────────────────────────────────────────────
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searching,   setSearching  ] = useState(false);
-  const searchTimeout                 = useRef(null);
-  const trimmedQuery                  = searchQuery.trim();
-  const isSearch                      = trimmedQuery.length >= 2;
+  const [searchQuery,      setSearchQuery     ] = useState('');
+  const [searching,        setSearching       ] = useState(false);
+  const [activePriceFilter, setActivePriceFilter] = useState(''); // label hiển thị chip giá
+  const searchTimeout                            = useRef(null);
+  const trimmedQuery                             = searchQuery.trim();
+  const isSearch                                 = trimmedQuery.length >= 2;
 
   // ── AI Modal state ──────────────────────────────────────────────────────────
   const [aiModalVisible,  setAiModalVisible ] = useState(false);
@@ -106,25 +109,95 @@ export default function ProductListScreen({ navigation }) {
     try {
       setSearching(true);
       setError(null);
-      const res  = await fetch(`${BASE_URL}/search?q=${encodeURIComponent(query)}&limit=200`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      // Client-side filter: only keep products whose title or category
-      // actually contains the query string (case-insensitive). This removes
-      // loosely-related results returned by the API's fuzzy search.
-      const lq = query.toLowerCase();
-      // Word-level filter: split multi-word queries into significant words so
-      // phrases like "wireless headphones" or AI fallback keywords still match.
-      const SKIP_WORDS = new Set(['the','and','for','under','over','with','from','best','good','some','any']);
-      const qWords = lq.split(/\s+/).filter(w => w.length >= 3 && !SKIP_WORDS.has(w));
-      const filtered = data.products.filter((p) => {
-        const haystack = [p.title, p.category, ...(p.tags ?? [])].join(' ').toLowerCase();
-        return qWords.length > 0
-          ? qWords.some(w => haystack.includes(w))
-          : haystack.includes(lq);
-      });
-      setProducts(filtered);
-      setTotal(filtered.length);
+
+      let priceFilter = null;
+      let cleanQuery  = query.trim();
+      let priceLabel  = '';
+
+      // ── 1. Range pattern: "$50-$200", "50 to 200", "$50–$300" ─────────────
+      const rangeMatch = cleanQuery.match(
+        /\$?\s*([\d,.]+)\s*(?:[-–]|\bto\b)\s*\$?\s*([\d,.]+)/i
+      );
+      if (rangeMatch) {
+        const lo = parseFloat(rangeMatch[1].replace(/,/g, ''));
+        const hi = parseFloat(rangeMatch[2].replace(/,/g, ''));
+        if (!isNaN(lo) && !isNaN(hi)) {
+          const minP = Math.min(lo, hi);
+          const maxP = Math.max(lo, hi);
+          priceFilter = { mode: 'range', lo: minP, hi: maxP };
+          priceLabel  = `$${minP} – $${maxP}`;
+          cleanQuery  = cleanQuery.replace(rangeMatch[0], '').replace(/\s{2,}/g, ' ').trim();
+        }
+      }
+
+      // ── 2. under / over / around via extractPriceHint ────────────────────
+      if (!priceFilter) {
+        const hint = extractPriceHint(cleanQuery);
+        if (hint) {
+          priceFilter = hint;
+          if (hint.mode === 'under')  priceLabel = `Under $${hint.value}`;
+          else if (hint.mode === 'over')  priceLabel = `Over $${hint.value}`;
+          else                            priceLabel = `Around $${hint.value}`;
+          // Strip price tokens so the keyword search is clean
+          cleanQuery = cleanQuery
+            .replace(/(?:under|below|less\s+than|<)\s*\$?\s*[\d,.]+/gi, '')
+            .replace(/(?:over|above|more\s+than|greater\s+than|>)\s*\$?\s*[\d,.]+/gi, '')
+            .replace(/\$\s*[\d,.]+/g, '')
+            .replace(/[\d,.]+\s*\$/g, '')
+            .replace(/[\d,.]+\s*(?:usd|vnd|eur|gbp|đ)/gi, '')
+            .replace(/\b\d[\d,.]*\b/g, '')
+            .replace(/\s{2,}/g, ' ')
+            .trim();
+        }
+      }
+
+      setActivePriceFilter(priceLabel);
+
+      // ── 3. Fetch products ────────────────────────────────────────────────
+      let apiProducts = [];
+
+      if (cleanQuery.length < 2) {
+        // Price-only search → fetch all products then filter client-side
+        const res  = await fetch(`${BASE_URL}?limit=200&skip=0`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        apiProducts  = data.products;
+      } else {
+        const res  = await fetch(`${BASE_URL}/search?q=${encodeURIComponent(cleanQuery)}&limit=200`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        // Client-side word filter removes loosely-related fuzzy results
+        const lq = cleanQuery.toLowerCase();
+        const SKIP_WORDS = new Set(['the','and','for','under','over','with','from','best','good','some','any']);
+        const qWords = lq.split(/\s+/).filter(w => w.length >= 3 && !SKIP_WORDS.has(w));
+        apiProducts = data.products.filter((p) => {
+          const haystack = [p.title, p.category, ...(p.tags ?? [])].join(' ').toLowerCase();
+          return qWords.length > 0
+            ? qWords.some(w => haystack.includes(w))
+            : haystack.includes(lq);
+        });
+      }
+
+      // ── 4. Apply price filter ────────────────────────────────────────────
+      if (priceFilter) {
+        const TOLERANCE = 0.20; // ±20% cho mode 'around'
+        if (priceFilter.mode === 'range') {
+          apiProducts = apiProducts.filter(p => p.price >= priceFilter.lo && p.price <= priceFilter.hi);
+        } else if (priceFilter.mode === 'under') {
+          apiProducts = apiProducts.filter(p => p.price <= priceFilter.value);
+        } else if (priceFilter.mode === 'over') {
+          apiProducts = apiProducts.filter(p => p.price >= priceFilter.value);
+        } else {
+          // around ±20%
+          apiProducts = apiProducts.filter(p =>
+            p.price >= priceFilter.value * (1 - TOLERANCE) &&
+            p.price <= priceFilter.value * (1 + TOLERANCE)
+          );
+        }
+      }
+
+      setProducts(apiProducts);
+      setTotal(apiProducts.length);
     } catch (e) {
       setError('Search failed. Please try again.');
     } finally {
@@ -156,6 +229,7 @@ export default function ProductListScreen({ navigation }) {
       return;
     }
     if (trimmedQuery === '') {
+      setActivePriceFilter('');
       fetchProducts(0, true);
       return;
     }
@@ -183,6 +257,7 @@ export default function ProductListScreen({ navigation }) {
     setActiveCategory(cat.value);
     setAiKeyword('');
     setAiResultText('');
+    setActivePriceFilter('');
     aiJustSearchedRef.current = true; // prevent debounced-search from overriding
     setSearchQuery('');
     if (!cat.value) {
@@ -310,6 +385,8 @@ export default function ProductListScreen({ navigation }) {
         image:    item.thumbnail,
         category: item.category,
       })}
+      isFavorite={isFavorite(item.id)}
+      onToggleFavorite={() => toggleFavorite(item)}
     />
   );
 
@@ -334,7 +411,7 @@ export default function ProductListScreen({ navigation }) {
           <TouchableOpacity
             activeOpacity={0.7}
             style={styles.clearSearchBtn}
-            onPress={() => { setSearchQuery(''); setAiResultText(''); setAiKeyword(''); }}
+            onPress={() => { setSearchQuery(''); setAiResultText(''); setAiKeyword(''); setActivePriceFilter(''); }}
           >
             <Text style={styles.clearSearchBtnText}>Clear search</Text>
           </TouchableOpacity>
@@ -376,7 +453,7 @@ export default function ProductListScreen({ navigation }) {
           <Text style={styles.searchIconHero}>🔍</Text>
           <TextInput
             style={styles.searchInput}
-            placeholder="Search products…"
+            placeholder="Search products or price, e.g. laptop < $500…"
             placeholderTextColor="rgba(79,99,210,0.45)"
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -438,7 +515,22 @@ export default function ProductListScreen({ navigation }) {
           <TouchableOpacity
             activeOpacity={0.7}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            onPress={() => { setAiResultText(''); setAiKeyword(''); setSearchQuery(''); setActiveCategory(''); }}
+            onPress={() => { setAiResultText(''); setAiKeyword(''); setSearchQuery(''); setActiveCategory(''); setActivePriceFilter(''); }}
+          >
+            <Text style={styles.aiChipClose}>✕</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* ── Price filter chip ── */}
+      {!!activePriceFilter && !aiKeyword && (
+        <View style={styles.priceChip}>
+          <Text style={styles.priceChipIcon}>💰</Text>
+          <Text style={styles.priceChipLabel} numberOfLines={1}>{activePriceFilter}</Text>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            onPress={() => { setActivePriceFilter(''); setSearchQuery(''); fetchProducts(0, true); }}
           >
             <Text style={styles.aiChipClose}>✕</Text>
           </TouchableOpacity>
@@ -461,7 +553,7 @@ export default function ProductListScreen({ navigation }) {
           {(isSearch || activeCategory !== '') && (
             <TouchableOpacity
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              onPress={() => { setSearchQuery(''); setActiveCategory(''); setAiKeyword(''); setAiResultText(''); fetchProducts(0, true); }}
+              onPress={() => { setSearchQuery(''); setActiveCategory(''); setAiKeyword(''); setAiResultText(''); setActivePriceFilter(''); fetchProducts(0, true); }}
             >
               <Text style={styles.clearAllText}>Clear ✕</Text>
             </TouchableOpacity>
@@ -803,6 +895,23 @@ const styles = StyleSheet.create({
   aiChipKeyword: { fontSize: FONT_SIZES.sm, color: COLORS.primary, fontWeight: FONT_WEIGHTS.bold },
   aiChipText:    { fontSize: 10, color: COLORS.textSecondary, marginTop: 1 },
   aiChipClose:   { fontSize: 12, color: COLORS.primary, fontWeight: FONT_WEIGHTS.bold, padding: 2 },
+
+  // ── Price filter chip (displayed below AI chip when user searches by price)
+  priceChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0FDF4',
+    borderRadius: RADIUS.full,
+    marginHorizontal: SPACING.base,
+    marginBottom: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 6,
+    gap: SPACING.sm,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+  },
+  priceChipIcon:  { fontSize: 13 },
+  priceChipLabel: { flex: 1, fontSize: FONT_SIZES.sm, color: '#16A34A', fontWeight: FONT_WEIGHTS.bold },
 
   resultsRow: {
     flexDirection: 'row',

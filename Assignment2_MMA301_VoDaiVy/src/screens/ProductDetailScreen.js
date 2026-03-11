@@ -9,7 +9,8 @@ import {
   FlatList,
   Dimensions,
 } from 'react-native';
-import useCart from '../hooks/useCart';
+import useCart      from '../hooks/useCart';
+import useFavorites from '../hooks/useFavorites';
 import { COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING, RADIUS } from '../constants/theme';
 
 const { width: SCREEN_W } = Dimensions.get('window');
@@ -113,9 +114,11 @@ const it = StyleSheet.create({
 export default function ProductDetailScreen({ route, navigation }) {
   const { product } = route.params;
   const { addToCart, isInCart, getItemQuantity, totalItems } = useCart();
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   const inCart   = isInCart(String(product.id));
   const quantity = getItemQuantity(String(product.id));
+  const loved    = isFavorite(product.id);
 
   const images = product.images?.length ? product.images : [product.thumbnail];
   const hasDiscount = product.discountPercentage && product.discountPercentage > 0;
@@ -250,6 +253,15 @@ export default function ProductDetailScreen({ route, navigation }) {
               <Text style={styles.footerBadgeText}>{totalItems}</Text>
             </View>
           )}
+        </TouchableOpacity>
+
+        {/* Heart / save button */}
+        <TouchableOpacity
+          style={[styles.cartOutlineBtn, loved && styles.heartBtnActive]}
+          onPress={() => toggleFavorite(product)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.cartOutlineIcon}>{loved ? '❤️' : '🤍'}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -419,6 +431,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   cartOutlineIcon: { fontSize: 22 },
+  heartBtnActive: {
+    backgroundColor: '#FFF0F0',
+    borderColor: '#FECDD3',
+  },
   footerBadge: {
     position: 'absolute', top: -6, right: -6,
     backgroundColor: COLORS.error,

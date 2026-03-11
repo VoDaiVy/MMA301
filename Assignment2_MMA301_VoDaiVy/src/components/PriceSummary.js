@@ -2,28 +2,12 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING, RADIUS } from '../constants/theme';
 
-// ─── Shipping logic ───────────────────────────────────────────────────────────
-// Quy tắc tính phí vận chuyển:
-//   Subtotal >= $50 HOẶC 5+ sản phẩm → FREE
-//   Subtotal $25 – $49.99             → $2.99
-//   Subtotal < $25                    → $5.99
 export function calcShipping(totalPrice, totalQty) {
   if (totalPrice >= 50 || totalQty >= 5) return 0;
   if (totalPrice >= 25) return 2.99;
   return 5.99;
 }
 
-// ─── PriceSummary ─────────────────────────────────────────────────────────────
-// Card hiển thị bảng tổng kết giá trong CartScreen gồm:
-//   - Subtotal (tổng tiền hàng chưa ship)
-//   - Shipping (phí ship hoặc FREE)
-//   - Progress bar tiến độ đến miễn phí ship
-//   - Tổng cuối cùng (grand total = subtotal + ship)
-//
-// Props:
-//   items               – mảng cart items (để tính totalQty)
-//   totalPrice          – tổng tiền hàng (số, không format)
-//   formattedTotalPrice – tổng tiền đã format "$XX.XX"
 export default function PriceSummary({ items, totalPrice, formattedTotalPrice }) {
   const totalQty    = items.reduce((s, i) => s + i.quantity, 0);
   const shipping    = calcShipping(totalPrice, totalQty);

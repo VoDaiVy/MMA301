@@ -8,21 +8,9 @@ import {
 } from 'react-native';
 import { COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING, RADIUS } from '../constants/theme';
 
-// ─── CartItem ─────────────────────────────────────────────────────────────────
-// Hiển thị một dòng sản phẩm trong giỏ hàng gồm:
-//   - Ảnh thumbnail bên trái
-//   - Thông tin (tên, danh mục, giá đơn, nút +/-) ở giữa
-//   - Tổng tiền dòng + nút xoá bên phải
-//
-// Props:
-//   item      – object { id, name, price, image, category, quantity }
-//   onIncrease – callback khi bấm nút "+"
-//   onDecrease – callback khi bấm nút "−" (quantity = 0 → tự động xoá, xử lý ở CartContext)
-//   onRemove   – callback khi bấm icon thùng rác
 export default function CartItem({ item, onIncrease, onDecrease, onRemove }) {
   return (
     <View style={styles.wrap}>
-      {/* Thumbnail – hiển thị fallback emoji nếu không có ảnh */}
       {item.image ? (
         <Image source={{ uri: item.image }} style={styles.image} resizeMode="cover" />
       ) : (
@@ -31,13 +19,11 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove }) {
         </View>
       )}
 
-      {/* Phần thông tin ở giữa */}
       <View style={styles.info}>
         <Text style={styles.name} numberOfLines={2}>{item.name}</Text>
         <Text style={styles.category}>{item.category}</Text>
         <Text style={styles.price}>${item.price.toFixed(2)}</Text>
 
-        {/* Nút tăng / giảm số lượng */}
         <View style={styles.qtyRow}>
           <TouchableOpacity style={styles.qtyBtn} onPress={onDecrease} activeOpacity={0.7}>
             <Text style={styles.qtyBtnText}>−</Text>
@@ -49,7 +35,6 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove }) {
         </View>
       </View>
 
-      {/* Phần bên phải: tổng tiền dòng + nút xoá */}
       <View style={styles.right}>
         <Text style={styles.lineTotal}>${(item.price * item.quantity).toFixed(2)}</Text>
         <TouchableOpacity

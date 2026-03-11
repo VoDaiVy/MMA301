@@ -11,6 +11,7 @@ export const CART_ACTIONS = {
   REMOVE_FROM_CART: 'REMOVE_FROM_CART',
   UPDATE_QUANTITY:  'UPDATE_QUANTITY',
   CLEAR_CART:       'CLEAR_CART',
+  REMOVE_BY_PRICE:  'REMOVE_BY_PRICE',
 };
 
 // ─── Reducer ──────────────────────────────────────────────────────────────────
@@ -65,6 +66,24 @@ function cartReducer(state, action) {
     case CART_ACTIONS.CLEAR_CART:
       return { ...state, items: [] };
 
+    case CART_ACTIONS.REMOVE_BY_PRICE: {
+      const { mode, value, lo, hi } = action.payload;
+      const TOLERANCE = 0.20; // ±20% cho mode 'around'
+      return {
+        ...state,
+        items: state.items.filter((item) => {
+          if (mode === 'range') return !(item.price >= lo && item.price <= hi);
+          if (mode === 'under') return !(item.price <= value);
+          if (mode === 'over')  return !(item.price >= value);
+          // around ±20%
+          return !(
+            item.price >= value * (1 - TOLERANCE) &&
+            item.price <= value * (1 + TOLERANCE)
+          );
+        }),
+      };
+    }
+
     default:
       return state;
   }
@@ -93,9 +112,13 @@ export function CartProvider({ children }) {
     dispatch({ type: CART_ACTIONS.CLEAR_CART });
   }, []);
 
+  const removeByPrice = useCallback((condition) => {
+    dispatch({ type: CART_ACTIONS.REMOVE_BY_PRICE, payload: condition });
+  }, []);
+
   return (
     <CartContext.Provider
-      value={{ state, addToCart, removeFromCart, updateQuantity, clearCart }}
+      value={{ state, addToCart, removeFromCart, updateQuantity, clearCart, removeByPrice }}
     >
       {children}
     </CartContext.Provider>

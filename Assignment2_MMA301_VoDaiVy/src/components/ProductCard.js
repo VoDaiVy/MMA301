@@ -31,7 +31,7 @@ const sr = StyleSheet.create({
 });
 
 // ─── ProductCard ──────────────────────────────────────────────────────────────
-function ProductCard({ product, onPress, onAddToCart }) {
+function ProductCard({ product, onPress, onAddToCart, isFavorite, onToggleFavorite }) {
   const { title, price, thumbnail, rating, category, discountPercentage } = product;
   const hasDiscount = discountPercentage && discountPercentage > 0;
   const originalPrice = hasDiscount
@@ -51,6 +51,17 @@ function ProductCard({ product, onPress, onAddToCart }) {
           <View style={styles.badge}>
             <Text style={styles.badgeText}>-{Math.round(discountPercentage)}%</Text>
           </View>
+        )}
+        {/* Heart button */}
+        {onToggleFavorite && (
+          <TouchableOpacity
+            style={styles.heartBtn}
+            onPress={onToggleFavorite}
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.heartIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
+          </TouchableOpacity>
         )}
       </View>
 
@@ -133,6 +144,19 @@ const styles = StyleSheet.create({
     fontWeight: FONT_WEIGHTS.bold,
     letterSpacing: 0.3,
   },
+
+  heartBtn: {
+    position: 'absolute',
+    top: SPACING.xs,
+    right: SPACING.xs,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255,255,255,0.82)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heartIcon: { fontSize: 14 },
 
   // Body
   body: {
