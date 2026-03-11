@@ -12,7 +12,6 @@ import useFavorites from '../hooks/useFavorites';
 import useCart      from '../hooks/useCart';
 import { COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING, RADIUS } from '../constants/theme';
 
-// ─── FavoriteItem ─────────────────────────────────────────────────────────────
 function FavoriteItem({ item, onRemove, onAddToCart, onPress }) {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.75}>
@@ -31,11 +30,9 @@ function FavoriteItem({ item, onRemove, onAddToCart, onPress }) {
       </View>
 
       <View style={styles.actions}>
-        {/* Add to cart */}
         <TouchableOpacity style={styles.cartBtn} onPress={onAddToCart} activeOpacity={0.7}>
           <Text style={styles.cartBtnText}>🛒</Text>
         </TouchableOpacity>
-        {/* Remove from favorites */}
         <TouchableOpacity
           style={styles.removeBtn}
           onPress={onRemove}
@@ -49,7 +46,6 @@ function FavoriteItem({ item, onRemove, onAddToCart, onPress }) {
   );
 }
 
-// ─── Screen ───────────────────────────────────────────────────────────────────
 export default function FavoritesScreen({ navigation }) {
   const { favorites, totalFavorites, removeFavorite, clearFavorites } = useFavorites();
   const { addToCart } = useCart();
@@ -65,7 +61,6 @@ export default function FavoritesScreen({ navigation }) {
     );
   };
 
-  // ── Empty State ───────────────────────────────────────────────────────────────
   if (totalFavorites === 0) {
     return (
       <View style={styles.emptyContainer}>

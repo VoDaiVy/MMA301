@@ -18,7 +18,6 @@ import { COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING, RADIUS } from '../constants/
 import CartItem from '../components/CartItem';
 import PriceSummary, { calcShipping } from '../components/PriceSummary';
 
-// ─── Screen ────────────────────────────────────────────────────────────────────
 export default function CartScreen({ navigation }) {
   const {
     items,
@@ -32,16 +31,13 @@ export default function CartScreen({ navigation }) {
     removeByPrice,
   } = useCart();
 
-  // ── Remove-by-price modal state ───────────────────────────────────
   const [priceModalVisible, setPriceModalVisible] = useState(false);
   const [priceInput,        setPriceInput       ] = useState('');
 
-  /** Parse giá từ cỗi nhập và trả về { condition, label } hoặc null */
   const parsePriceInput = (raw) => {
     const str = raw.trim();
     if (!str) return null;
 
-    // Range: "$50-$200", "50 to 200", "$50–$300"
     const rangeMatch = str.match(/\$?\s*([\d,.]+)\s*(?:[-–]|\bto\b)\s*\$?\s*([\d,.]+)/i);
     if (rangeMatch) {
       const lo = parseFloat(rangeMatch[1].replace(/,/g, ''));
@@ -53,7 +49,6 @@ export default function CartScreen({ navigation }) {
       }
     }
 
-    // under / over / around — via extractPriceHint
     const hint = extractPriceHint(str);
     if (hint) {
       const label =
@@ -71,7 +66,6 @@ export default function CartScreen({ navigation }) {
       Alert.alert('Invalid input', 'Please enter a valid price condition, e.g.:\n• under $50\n• over $100\n• $50-$200\n• around $75');
       return;
     }
-    // Count affected items before removing
     const TOLERANCE = 0.20;
     const { condition } = parsed;
     const affected = items.filter((item) => {

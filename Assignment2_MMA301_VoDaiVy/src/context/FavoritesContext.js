@@ -1,13 +1,11 @@
 import React, { createContext, useReducer, useCallback } from 'react';
 
-// ─── Action Types ─────────────────────────────────────────────────────────────
 export const FAV_ACTIONS = {
   TOGGLE:       'TOGGLE',
   REMOVE:       'REMOVE',
   CLEAR_FAVS:   'CLEAR_FAVS',
 };
 
-// ─── Reducer ──────────────────────────────────────────────────────────────────
 function favReducer(state, action) {
   switch (action.type) {
     case FAV_ACTIONS.TOGGLE: {
@@ -30,10 +28,8 @@ function favReducer(state, action) {
   }
 }
 
-// ─── Context ──────────────────────────────────────────────────────────────────
 export const FavoritesContext = createContext(null);
 
-// ─── Provider ─────────────────────────────────────────────────────────────────
 export function FavoritesProvider({ children }) {
   const [state, dispatch] = useReducer(favReducer, { items: [] });
 

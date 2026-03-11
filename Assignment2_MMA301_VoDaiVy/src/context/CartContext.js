@@ -1,11 +1,9 @@
 import React, { createContext, useReducer, useCallback } from 'react';
 
-// ─── Initial State ────────────────────────────────────────────────────────────
 const initialState = {
-  items: [], // [{ id, name, price, image, quantity }]
+  items: [],
 };
 
-// ─── Action Types ─────────────────────────────────────────────────────────────
 export const CART_ACTIONS = {
   ADD_TO_CART:      'ADD_TO_CART',
   REMOVE_FROM_CART: 'REMOVE_FROM_CART',
@@ -14,7 +12,6 @@ export const CART_ACTIONS = {
   REMOVE_BY_PRICE:  'REMOVE_BY_PRICE',
 };
 
-// ─── Reducer ──────────────────────────────────────────────────────────────────
 function cartReducer(state, action) {
   switch (action.type) {
     case CART_ACTIONS.ADD_TO_CART: {
@@ -22,7 +19,6 @@ function cartReducer(state, action) {
         (item) => item.id === action.payload.id,
       );
       if (existingIndex >= 0) {
-        // Product already in cart – increment quantity
         const updatedItems = state.items.map((item, index) =>
           index === existingIndex
             ? { ...item, quantity: item.quantity + (action.payload.quantity ?? 1) }
@@ -30,7 +26,6 @@ function cartReducer(state, action) {
         );
         return { ...state, items: updatedItems };
       }
-      // New product
       return {
         ...state,
         items: [
@@ -49,7 +44,6 @@ function cartReducer(state, action) {
     case CART_ACTIONS.UPDATE_QUANTITY: {
       const { id, quantity } = action.payload;
       if (quantity <= 0) {
-        // Remove item when quantity drops to zero or below
         return {
           ...state,
           items: state.items.filter((item) => item.id !== id),
@@ -68,14 +62,13 @@ function cartReducer(state, action) {
 
     case CART_ACTIONS.REMOVE_BY_PRICE: {
       const { mode, value, lo, hi } = action.payload;
-      const TOLERANCE = 0.20; // ±20% cho mode 'around'
+      const TOLERANCE = 0.20;
       return {
         ...state,
         items: state.items.filter((item) => {
           if (mode === 'range') return !(item.price >= lo && item.price <= hi);
           if (mode === 'under') return !(item.price <= value);
           if (mode === 'over')  return !(item.price >= value);
-          // around ±20%
           return !(
             item.price >= value * (1 - TOLERANCE) &&
             item.price <= value * (1 + TOLERANCE)
@@ -89,10 +82,8 @@ function cartReducer(state, action) {
   }
 }
 
-// ─── Context ──────────────────────────────────────────────────────────────────
 export const CartContext = createContext(null);
 
-// ─── Provider ─────────────────────────────────────────────────────────────────
 export function CartProvider({ children }) {
   const [state, dispatch] = useReducer(cartReducer, initialState);
 

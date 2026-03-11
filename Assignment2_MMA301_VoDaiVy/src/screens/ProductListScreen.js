@@ -25,9 +25,6 @@ import { COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING, RADIUS } from '../constants/
 const LIMIT    = 10;
 const BASE_URL = 'https://dummyjson.com/products';
 
-// Short phrases that map cleanly to working dummyjson search terms.
-// Each chip hits /products/category/{slug} directly — no Gemini involved.
-// This guarantees accurate results (no keyword bleed like "phone" → headphones).
 const AI_SUGGESTION_CHIPS = [
   { label: '📱 smartphones < $500',  category: 'smartphones',    priceHint: { mode: 'under', value: 500  } },
   { label: '💻 Laptop < $1,999',    category: 'laptops',        priceHint: { mode: 'under', value: 1999 } },
@@ -37,7 +34,6 @@ const AI_SUGGESTION_CHIPS = [
   { label: '🌸 Fragrances',          category: 'fragrances' },
 ];
 
-// Category filter chips — each maps to a dummyjson category slug
 const CATEGORIES = [
   { emoji: '✦', name: 'All',   value: '' },
   { emoji: '📱', name: 'Phones', value: 'smartphones' },

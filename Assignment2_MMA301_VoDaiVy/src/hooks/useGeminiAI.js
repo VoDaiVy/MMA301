@@ -3,8 +3,6 @@ import { GEMINI_API_KEY, GEMINI_MODEL } from '../constants/config';
 
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
-// Tested search terms that actually return results from dummyjson API.
-// Mapped as: user concept → search term to use.
 const KEYWORD_MAP = `
 smartphone/mobile/phone → "phone"
 laptop/computer/notebook → "laptop"
@@ -31,9 +29,6 @@ lighting/lamp/bulb → "decoration"
 gifts for men → "watch" or "shirt"
 gifts for women → "dress" or "bag"`;
 
-// Local normalization: maps any variant Gemini might return → a term proven
-// to return results from dummyjson. Applied AFTER Gemini responds so stray
-// outputs like "womens dresses" still resolve correctly to "dress".
 const KEYWORD_NORMALIZE = {
   // phones
   smartphone: 'phone', smartphones: 'phone', mobiles: 'phone', 'cell phone': 'phone',
@@ -113,14 +108,6 @@ export function extractPriceHint(raw) {
   return null;
 }
 
-/**
- * Strip price/currency/number tokens from a raw user query before sending
- * to Gemini so it focuses on the product type, not the budget.
- * Examples:
- *   "Find me Laptops 1999.99$"  → "Find me Laptops"
- *   "Watch under $200"          → "Watch under"
- *   "Phone 500 USD"             → "Phone"
- */
 function sanitizeInput(raw) {
   return (raw ?? '')
     .replace(/\$[\d,. ]+/g, '')                      // $1999.99 or $ 200
@@ -131,12 +118,6 @@ function sanitizeInput(raw) {
     .trim();
 }
 
-/**
- * Normalise the keyword Gemini returns:
- *  1. Strip any remaining price/number tokens (e.g. "laptops 199999" → "laptops")
- *  2. Exact dict lookup
- *  3. Per-word dict lookup (handles "laptops" → "laptop")
- */
 function normalizeKeyword(kw) {
   // Step 1 – strip surviving numbers / currency symbols from Gemini's output
   const stripped = (kw ?? '')
@@ -175,15 +156,6 @@ Rules:
 
 Respond ONLY with this exact JSON (no markdown, no code fences):
 {"keyword":"exact quoted term","explanation":"one short sentence describing what you found"}`;
-/**
- * useGeminiAI – calls Gemini to extract a product search keyword from a
- * natural-language shopping request.
- *
- * Returns:
- *   analyzeRequest(text) → Promise<{ keyword: string, explanation: string } | null>
- *   loading: boolean
- *   error: string | null
- */
 export default function useGeminiAI() {
   const [loading, setLoading] = useState(false);
   const [error,   setError  ] = useState(null);

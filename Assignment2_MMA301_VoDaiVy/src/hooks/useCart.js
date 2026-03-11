@@ -10,13 +10,11 @@ export default function useCart() {
 
   const { state, addToCart, removeFromCart, updateQuantity, clearCart, removeByPrice } = context;
 
-  /** Total number of individual units across all cart lines */
   const totalItems = useMemo(
     () => state.items.reduce((sum, item) => sum + item.quantity, 0),
     [state.items],
   );
 
-  /** Total price of the cart */
   const totalPrice = useMemo(
     () =>
       state.items.reduce(
@@ -26,7 +24,6 @@ export default function useCart() {
     [state.items],
   );
 
-  /** Formatted total price string, e.g. "$19.99" */
   const formattedTotalPrice = useMemo(
     () =>
       totalPrice.toLocaleString('en-US', {

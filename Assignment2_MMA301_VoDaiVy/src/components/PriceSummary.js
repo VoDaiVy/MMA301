@@ -13,7 +13,6 @@ export default function PriceSummary({ items, totalPrice, formattedTotalPrice })
   const shipping    = calcShipping(totalPrice, totalQty);
   const grandTotal  = totalPrice + shipping;
 
-  // Tính mức độ còn thiếu để đạt free ship
   const priceLeft   = Math.max(0, 50 - totalPrice);
   const qtyLeft     = Math.max(0, 5 - totalQty);
   const progressPct = Math.min(1, totalPrice / 50);
@@ -22,13 +21,11 @@ export default function PriceSummary({ items, totalPrice, formattedTotalPrice })
     <View style={styles.card}>
       <Text style={styles.title}>Price Summary</Text>
 
-      {/* Dòng tổng tiền hàng */}
       <View style={styles.row}>
         <Text style={styles.label}>Subtotal ({totalQty} {totalQty === 1 ? 'item' : 'items'})</Text>
         <Text style={styles.value}>{formattedTotalPrice}</Text>
       </View>
 
-      {/* Dòng phí ship */}
       <View style={styles.row}>
         <Text style={styles.label}>Shipping</Text>
         <Text style={[styles.value, shipping === 0 && styles.free]}>
@@ -36,7 +33,6 @@ export default function PriceSummary({ items, totalPrice, formattedTotalPrice })
         </Text>
       </View>
 
-      {/* Progress bar – chỉ hiện khi chưa đạt free ship */}
       {shipping > 0 && (
         <View style={styles.progressWrap}>
           <View style={styles.progressBg}>
@@ -55,7 +51,6 @@ export default function PriceSummary({ items, totalPrice, formattedTotalPrice })
 
       <View style={styles.divider} />
 
-      {/* Dòng tổng cuối */}
       <View style={styles.row}>
         <Text style={styles.totalLabel}>Total</Text>
         <Text style={styles.totalValue}>

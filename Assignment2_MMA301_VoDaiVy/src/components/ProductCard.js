@@ -30,7 +30,6 @@ const sr = StyleSheet.create({
   label: { fontSize: 10, color: COLORS.textSecondary, marginLeft: 4, fontWeight: FONT_WEIGHTS.semiBold },
 });
 
-// ─── ProductCard ──────────────────────────────────────────────────────────────
 function ProductCard({ product, onPress, onAddToCart, isFavorite, onToggleFavorite }) {
   const { title, price, thumbnail, rating, category, discountPercentage } = product;
   const hasDiscount = discountPercentage && discountPercentage > 0;
@@ -40,7 +39,6 @@ function ProductCard({ product, onPress, onAddToCart, isFavorite, onToggleFavori
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
-      {/* Product Image */}
       <View style={styles.imageWrap}>
         <Image
           source={{ uri: thumbnail }}
@@ -52,7 +50,6 @@ function ProductCard({ product, onPress, onAddToCart, isFavorite, onToggleFavori
             <Text style={styles.badgeText}>-{Math.round(discountPercentage)}%</Text>
           </View>
         )}
-        {/* Heart button */}
         {onToggleFavorite && (
           <TouchableOpacity
             style={styles.heartBtn}
@@ -65,20 +62,16 @@ function ProductCard({ product, onPress, onAddToCart, isFavorite, onToggleFavori
         )}
       </View>
 
-      {/* Card Body — flex:1 ensures cards stretch to same height in a row */}
       <View style={styles.body}>
-        {/* Top section grows to fill space, pushing footer down */}
         <View style={styles.bodyTop}>
           <Text style={styles.category} numberOfLines={1}>{category}</Text>
           <Text style={styles.title} numberOfLines={2}>{title}</Text>
           <StarRating rating={rating} />
         </View>
 
-        {/* Footer always fixed at bottom */}
         <View style={styles.footer}>
           <View style={styles.priceBlock}>
             <Text style={styles.price}>${price.toFixed(2)}</Text>
-            {/* Fixed height container so button doesn't shift */}
             <View style={styles.originalPriceSlot}>
               {hasDiscount && (
                 <Text style={styles.originalPrice}>${originalPrice.toFixed(2)}</Text>
@@ -86,7 +79,6 @@ function ProductCard({ product, onPress, onAddToCart, isFavorite, onToggleFavori
             </View>
           </View>
 
-          {/* Quick-add button */}
           <TouchableOpacity
             style={styles.addBtn}
             onPress={onAddToCart}
@@ -103,7 +95,6 @@ function ProductCard({ product, onPress, onAddToCart, isFavorite, onToggleFavori
 
 export default memo(ProductCard);
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   card: {
     flex: 1,
@@ -119,7 +110,6 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
 
-  // Image
   imageWrap: {
     width: '100%',
     height: 160,
@@ -180,14 +170,13 @@ const styles = StyleSheet.create({
     fontWeight: FONT_WEIGHTS.semiBold,
     color: COLORS.textPrimary,
     lineHeight: 17,
-    minHeight: 34,   // 2 lines guaranteed — prevents height jitter
+    minHeight: 34,   
   },
 
-  // Footer — always same height
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',   // center vertically so button is always level
+    alignItems: 'center',   
   },
   priceBlock: {
     gap: 1,
@@ -198,7 +187,6 @@ const styles = StyleSheet.create({
     color: '#1E40AF',
     letterSpacing: -0.3,
   },
-  // Fixed slot so presence/absence of strikethrough doesn't shift button
   originalPriceSlot: {
     height: 14,
     justifyContent: 'center',
@@ -209,7 +197,6 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
   },
 
-  // Add button
   addBtn: {
     width: 36,
     height: 36,
